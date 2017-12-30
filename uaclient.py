@@ -15,7 +15,7 @@ class SmallSMILHandler(ContentHandler):
         Constructor. Inicializamos las variables
         """
         self.variable = {}
-            
+
     def startElement(self, name, atribs):
         """
         Método que se llama cuando se abre una etiqueta
@@ -27,7 +27,7 @@ class SmallSMILHandler(ContentHandler):
                 'log': {'path'},
                 'audio': {'path'}}
         atribcont = {}
-        
+
         if name in tags:
 
             for atribute in tags[name]:
@@ -36,18 +36,18 @@ class SmallSMILHandler(ContentHandler):
                 else:
                     if atribs.get(atribute, "") != "":
                         atribcont[atribute] = atribs.get(atribute, "")
-                
+
                 #tagentero = {name: atribcont}
-            
+
             self.variable[name] = atribcont
-                
+
     def get_tags(self):
         return self.variable
-        
-if __name__ == "__main__":        
+
+if __name__ == "__main__":
     # Constantes. Dirección IP del servidor y contenido a enviar
     try:
-        CONFIG = sys.argv[1]    
+        CONFIG = sys.argv[1]
         METODO = sys.argv[2].upper()
         if METODO == "REGISTER":
             OPCION = int(sys.argv[3])
@@ -55,31 +55,30 @@ if __name__ == "__main__":
             OPCION = sys.argv[3]
     except:
         sys.exit("Usage: python uaclient.py config method option")
-    
+
     parser = make_parser()
     cHandler = SmallSMILHandler()
     parser.setContentHandler(cHandler)
     parser.parse(open(CONFIG))
     print(cHandler.get_tags())
     datos = cHandler.get_tags()
-    
+
     proxy_ip = datos["regproxy"]["ip"]
     proxy_port = datos['regproxy']['puerto']
     name = datos['account']['username']
     puert_serv = datos['uaserver']['puerto']
-    
+
     # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
         my_socket.connect((proxy_ip, int(proxy_port)))
-        
+
         if METODO == "REGISTER":
             line1 = METODO + " sip:" + name + ':' + puert_serv + ' SIP/2.0\r\n'
             line = line1 + "Expires: " + str(OPCION) + "\r\n\r\n"
-            
+
             print("Enviando:", line)
             my_socket.send(bytes(line, 'utf-8'))  # lo pasamos a bytes
-            
-            
+
             data = my_socket.recv(1024)
             print('Recibido -- ', data.decode('utf-8'))
     print("Socket terminado.")
