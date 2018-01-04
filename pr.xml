@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+  <server   name="ProxyServer"
+            ip="127.0.0.1"
+            puerto="5000"/>
+  <database path="/home/sergio/ptavi-pfinal/basedatosUAregis.txt"
+            passwdpath="/home/sergio/ptavi-pfinal/passwords.txt"/>
+  <log      path=".txt"/>
+</config>

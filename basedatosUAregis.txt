@@ -1,0 +1,9 @@
+{
+    "luke@polismassa.com": {
+        "port": "5060",
+        "nonce": "27355631601518001103",
+        "autorizado": true,
+        "address": "127.0.0.1",
+        "expires": "2018-01-04 15:37:08"
+    }
+}
