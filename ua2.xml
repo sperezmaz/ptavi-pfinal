@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config >
+  <account  username="correo@gmail.org"
+            passwd="PEPITO32"/>
+  <uaserver ip="127.0.0.1"
+            puerto="5200"/>
+  <rtpaudio puerto="7000"/>
+  <regproxy ip="127.0.0.1"
+            puerto="5000"/>
+  <log      path="/home/sergio/ptavi-pfinal/"/>
+  <audio    path="/home/sergio/ptavi-pfinal/cancion.mp3"/>
+</config>

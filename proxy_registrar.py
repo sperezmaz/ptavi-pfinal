@@ -95,7 +95,7 @@ class SIPHandler(socketserver.DatagramRequestHandler):
                 
                 try:
                     authenticate_recib = message[7].split('"')[1]
-                except IndexError:
+                except:
                     authenticate_recib = ""
                     
                 if authenticate_recib == response:
@@ -107,19 +107,72 @@ class SIPHandler(socketserver.DatagramRequestHandler):
                                      'WWW-Authenticate: Digest nonce="' +
                                      nonce + '"\r\n\r\n'), 'utf-8'))
             else:
-                self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")            
-     
-            self.register2json()                  
+                self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
 
+            self.register2json()
+            
+        elif metodo == "INVITE":
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+                address_destino = message[1][4:]
+                try:
+                    ip_destino = self.dicc_users[address_destino]['address']
+                    puerto_destino = self.dicc_users[address_destino]['port']
+                    my_socket.connect((ip_destino, int(puerto_destino)))
+                    my_socket.send(bytes(line.decode('utf-8'),'utf-8'))
+                    print("Enviando -- ", line.decode('utf-8'))
+                    
+                    data = my_socket.recv(1024)
+                    data = data.decode('utf-8')
+                    print("Recibido -- ", data)
+                    self.wfile.write(bytes(data, 'utf-8'))
+                except:
+                    data = ""
+                    print("User " + address_destino + " Not Found")
+                    self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+                    
+        elif metodo == "ACK":
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+                address_destino = message[1][4:]
+                ip_destino = self.dicc_users[address_destino]['address']
+                puerto_destino = self.dicc_users[address_destino]['port']
+                my_socket.connect((ip_destino, int(puerto_destino)))
+                my_socket.send(bytes(line.decode('utf-8'),'utf-8'))
+                
+        elif metodo == "BYE":
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+                try:
+                    address_destino = message[1][4:]
+                    ip_destino = self.dicc_users[address_destino]['address']
+                    puerto_destino = self.dicc_users[address_destino]['port']
+                    my_socket.connect((ip_destino, int(puerto_destino)))
+                    my_socket.send(bytes(line.decode('utf-8'),'utf-8'))
+                    print("Enviando -- ", line.decode('utf-8'))
+                    
+                    data = my_socket.recv(1024)
+                    data = data.decode('utf-8')
+                    print("Recibido -- ", data)
+                    if data == "SIP/2.0 200 OK\r\n\r\n":
+                        self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+                except:
+                    data = ""
+                    print("User " + address_destino + " Not Found")
+                    self.wfile.write(b"SIP/2.0 404 User Not Found\r\n\r\n")
+                    
+        elif metodo not in ["REGISTER", "INVITE", "ACK", "BYE"]:
+            self.wfile.write(b"SIP/2.0 405 Method Not Allowed\r\n\r\n")
+            
+        else:
+            self.wfile.write(b"SIP/2.0 400 Bad Request\r\n\r\n")
+                
 
     def register2json(self):
         """Imprime en fichero informacion sobre el usuario."""
-        json.dump(self.dicc_users, open(DATABASE, 'w'), indent=4)
+        json.dump(self.dicc_users, open(database, 'w'), indent=4)
 
     def json2registered(self):
         """Leer contenido y usarlo para usuarios registrados."""
         try:
-            with open(DATABASE) as in_file:
+            with open(database) as in_file:
                 self.dicc_users = json.load(in_file)
         except:
             self.dicc_users = {}
@@ -161,11 +214,10 @@ if __name__ == "__main__":
     parser.parse(open(CONFIG))
     # print(cHandler.get_tags())
     datos = cHandler.get_tags()
-    DATABASE = datos['database']['path']
-    IP = datos['server']['ip']
-    PUERTO = datos['server']['puerto']
-    print(PUERTO)
-    serv = socketserver.UDPServer((IP, int(PUERTO)), SIPHandler)
+    database = datos['database']['path']
+    ip = datos['server']['ip']
+    puerto = datos['server']['puerto']
+    serv = socketserver.UDPServer((ip, int(puerto)), SIPHandler)
     print("Lanzando servidor UDP de eco...")
     try:
         serv.serve_forever()  # espera en un bucle
