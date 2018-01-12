@@ -1,0 +1,22 @@
+NOTAS:
+
+En esta práctica se realiza una sesión SIP de intercambio de audio vı́a RTP.
+
+    --El cliente UA se registra en el servidor de registro y este le responde
+    con un 401 Unauthorized con un nonce aleatorio, para que se vuelva a
+    registar, pero con la cabecera de autenticación (que contiene el hash del
+    nonce recibido junto con la contraseña que hay asociada al cliente en el
+    archivo "passwords.txt"). 
+    Si se había registrado antes correctamente y vuelve a mandar un register 
+    antes de que termine el tiempo de expiración, recibe directamente un 
+    200 OK, porque ya había sido autorizado y guardado en la base de datos 
+    (basedatosUAregis.txt).
+    
+    --Envío de audio vía RTP a través de hilos en la parte cliente y la parte
+    servidor. Cuando se recibe un bye, el envío RTP para.
+    
+    --Cuando se recibe audio vı́a RTP se lanza mediante hilos cvlc para escuchar
+    el audio. Cuando se recibe un bye deja de escuchar.
+    
+    -Para dar de baja los UA, se envía un mensaje Register con tiempo de 
+    expiración 0.

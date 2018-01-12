@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-"""Cliente UA que inicia sesion y la cierra con un BYE."""
+"""Servidor que hace funciones de proxy y Registrar."""
 
 import sys
 import socket
@@ -16,24 +16,23 @@ from uaclient import log
 
 
 class XMLProxyHandler(ContentHandler):
+    """Maneador XML del UA proxy."""
 
-    def __init__ (self):
+    def __init__(self):
         """Constructor. Inicializamos las variables."""
         self.variable = {}
 
     def startElement(self, name, atribs):
-        """Método que se llama cuando se abre una etiqueta."""
+        """Metodo que se llama cuando se abre una etiqueta."""
         tags = {'server': {'name', 'ip', 'puerto'},
                 'database': {'path', 'passwdpath'},
                 'log': {'path'}}
         atribcont = {}
 
         if name in tags:
-
             for atribute in tags[name]:
-                if name == 'uaserver' and atribute == 'ip' \
-                and atribs.get(atribute, "127.0.0.1") != "":
-                    atribcont[atribute] = atribs.get(atribute, "127.0.0.1")
+                if name == 'server' and atribute == 'ip':
+                    atribcont['ip'] = atribs.get('ip', "127.0.0.1")
                 else:
                     if atribs.get(atribute, "") != "":
                         atribcont[atribute] = atribs.get(atribute, "")
@@ -41,16 +40,17 @@ class XMLProxyHandler(ContentHandler):
             self.variable[name] = atribcont
 
     def get_tags(self):
+        """Funcion para obtener las etiquetas."""
         return self.variable
 
+
 class SIPHandler(socketserver.DatagramRequestHandler):
-    """SIP class."""
+    """Proxy sip class."""
 
     dicc_users = {}
 
     def handle(self):
         """handle method of the proxy class."""
-
         line = self.rfile.read()
         print('Recibido -- ', line.decode('utf-8'))
         message = line.decode('utf-8').split()
@@ -62,7 +62,7 @@ class SIPHandler(socketserver.DatagramRequestHandler):
 
         t = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(time.time() + 3600))
 
-        self.eliminar_usuario(t)                      
+        self.eliminar_usuario(t)
 
         if metodo == "REGISTER":
             sip_address = message[1][4:]
@@ -87,7 +87,7 @@ class SIPHandler(socketserver.DatagramRequestHandler):
                 self.dicc_users[usuario] = {'autorizado': False,
                                             'address': ip_client,
                                             'expires': t_tot,
-                                            'port': puerto_serv, 
+                                            'port': puerto_serv,
                                             'nonce': nonce}
                 line = 'SIP/2.0 401 Unauthorized\r\nWWW-Authenticate: Digest'
                 line += ' nonce="' + nonce + '"\r\n\r\n'
@@ -125,7 +125,7 @@ class SIPHandler(socketserver.DatagramRequestHandler):
 
             else:
                 expires_anterior = self.dicc_users[usuario]['expires']
-                if t_tot >= expires_anterior:
+                if t_tot >= expires_anterior or time_exp == 0:
                     self.dicc_users[usuario]['expires'] = t_tot
                 line = "SIP/2.0 200 OK\r\n\r\n"
                 print("Enviando -- ", line)
@@ -274,7 +274,7 @@ class SIPHandler(socketserver.DatagramRequestHandler):
 
 
 def obtener_contra(usuario):
-    """Busca contraseña en archivo passwords."""
+    """Busca contrasena en archivo passwords."""
     try:
         file = open(datos['database']['passwdpath'], "r")
         lines = file.readlines()
